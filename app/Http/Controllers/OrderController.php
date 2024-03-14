@@ -23,7 +23,8 @@ class OrderController extends Controller
         if (!$order) {
             return response()->json(['message' => 'Order not found !'], 404);
         }
-        $details = $order->with('orderItems.product')->where('user_id', Auth::id())->firstOrFail();
+
+        $details = $order->with(['orderItems.product', 'user'])->where('id', $orderId)->where('user_id', Auth::id())->firstOrFail();
         return response()->json($details);
     }
 

@@ -12,34 +12,17 @@ import {
   AlertDialogContent,
   AlertDialogHeader,
 } from '@/components/ui/alert-dialog'
-import { useAppDispatch } from '@/store'
-import { login, signup } from '@/store/app'
 import { useState } from 'react'
-import { useToast } from './ui/use-toast'
-
-type SigninFormValues = {
-  email: string
-  password: string
-}
-
-type SignUpFormValues = {
-  email: string
-  password: string
-  phone_number: string
-  shipping_address: string
-}
+import { SignUpFormValues, SigninFormValues } from '@/libs/interfaces'
+import { fetchBasket, onLogin, onSignup } from '@/libs/utils'
+import { login, signup } from '@/store/app'
+import { useAppDispatch } from '@/store'
 
 export const SigninForm = () => {
-  const { toast } = useToast()
-
   const schema = z.object({
     email: z.string().email(),
     password: z.string().min(6),
-    // phone_number: z.string().nullable(),
-    // shipping_address: z.string().nullable(),
   })
-
-  const dispatch = useAppDispatch()
 
   const signInForm = useForm<SigninFormValues>({
     resolver: zodResolver(schema),
@@ -48,79 +31,28 @@ export const SigninForm = () => {
     resolver: zodResolver(schema),
   })
 
-  const onLogin = async (values: SigninFormValues) => {
-    try {
-      const response = await fetch('http://127.0.0.1:8000/api/login', {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: values.email,
-          password: values.password,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        toast({
-          title: 'Error',
-          description: `${data.message}`,
-        })
-
-        return
-      }
-
-      // set local
-      localStorage.setItem('authToken', data.token)
-      dispatch(login())
-    } catch (error) {
-      console.error('Error fetching data:', error)
-    }
-  }
-
-  const onSignup = async (values: SignUpFormValues) => {
-    try {
-      const response = await fetch('http://127.0.0.1:8000/api/register', {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: values.email,
-          password: values.password,
-          phone_number: values.phone_number,
-          shipping_address: values.shipping_address,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        toast({
-          title: 'Error',
-          description: `${data.message}`,
-        })
-
-        return
-      }
-
-      // set local
-      localStorage.setItem('authToken', data.token)
-
-      dispatch(signup())
-    } catch (error) {
-      console.error('Error fetching data:', error)
-    }
-  }
+  const dispatch = useAppDispatch()
 
   const [activeTab, setActiveTab] = useState(1)
 
   const handleTabClick = (tabNumber: number) => {
     setActiveTab(tabNumber)
+  }
+
+  async function _login(data: SigninFormValues) {
+    const result: boolean = await onLogin(data)
+    if (result) {
+      dispatch(login())
+      fetchBasket()
+    }
+  }
+
+  async function _signup(data: SignUpFormValues) {
+    const result: boolean = await onSignup(data)
+    if (result) {
+      dispatch(signup())
+      fetchBasket()
+    }
   }
 
   return (
@@ -145,7 +77,7 @@ export const SigninForm = () => {
             </div>
             <div className="tab-content">
               {activeTab === 1 && (
-                <form onSubmit={signInForm.handleSubmit(onLogin)}>
+                <form onSubmit={signInForm.handleSubmit(_login)}>
                   <InputField
                     control={signInForm.control}
                     className="col-span-2"
@@ -167,7 +99,7 @@ export const SigninForm = () => {
                 </form>
               )}
               {activeTab === 2 && (
-                <form onSubmit={signUpForm.handleSubmit(onSignup)}>
+                <form onSubmit={signUpForm.handleSubmit(_signup)}>
                   <InputField
                     control={signUpForm.control}
                     className="col-span-2"

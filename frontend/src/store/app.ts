@@ -1,13 +1,7 @@
 
+import { Product } from '@/libs/interfaces';
 import { createSlice } from '@reduxjs/toolkit';
 
-type Product = {
-  id: number
-  title: string
-  price: number
-  quantity: number
-  image: string
-}
 
 interface AppState {
   cart: Product[]
@@ -40,6 +34,9 @@ export const appSlice = createSlice({
         (product) => product.id !== action.payload.id,
       )
     },
+    emptyCart: (state) => {
+      state.cart = []
+    },
     login: (state) => {
       state.loggedIn = true
     },
@@ -53,6 +50,6 @@ export const appSlice = createSlice({
 })
 
 // Action creators are generated for each case reducer function
-export const { addToCart, removeFromCart, login, signup, logout } = appSlice.actions
+export const { addToCart, removeFromCart, emptyCart, login, signup, logout } = appSlice.actions
 
 export default appSlice.reducer

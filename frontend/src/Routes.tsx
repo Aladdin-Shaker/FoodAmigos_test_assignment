@@ -4,6 +4,7 @@ import { SigninForm } from './components/login-form'
 import { HomePage } from './pages/home'
 import { OrderPage } from './pages/order'
 import { useAppSelector } from './store'
+import { OrdersPage } from './pages/orders'
 
 const router = createBrowserRouter([
   {
@@ -11,7 +12,11 @@ const router = createBrowserRouter([
     element: <HomePage />,
   },
   {
-    path: '/order/:id',
+    path: '/orders',
+    element: <OrdersPage />,
+  },
+  {
+    path: '/orders/:id',
     element: <OrderPage />,
   },
 ])

@@ -7,91 +7,73 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { Link } from 'react-router-dom'
-import { logout, removeFromCart } from '@/store/app'
-import { Product } from '@/pages/home'
+import { checkout, doLogout, removeFromBasket } from '@/libs/utils'
+import { emptyCart, logout, removeFromCart } from '@/store/app'
+import { Product } from '@/libs/interfaces'
+import { toast } from './ui/use-toast'
+import { Input } from './ui/input'
+import { useState } from 'react'
 
 export const Header = () => {
   const { loggedIn } = useAppSelector((s) => s.app)
   const { cart } = useAppSelector((s: RootState) => s.app)
+  const [note, setNote] = useState<string>('')
+
   const dispatch = useAppDispatch()
 
-  const doLogout = async () => {
-    const token = localStorage.getItem('authToken')
+  function _logout(): void {
+    doLogout().then(() => {
+      dispatch(logout())
+      dispatch(emptyCart())
+    })
+  }
+  function _removeProduct(_product: Product): void {
+    removeFromBasket(_product).then(() => {
+      dispatch(removeFromCart(_product))
+    })
+  }
+  function _checkout(): void {
+    checkout(note)
+      .then(() => {
+        dispatch(emptyCart())
+        localStorage.removeItem('total_price')
 
-    if (!token) {
-      return
-    }
-    try {
-      const response = await fetch('http://127.0.0.1:8000/api/logout', {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        toast({
+          title: 'Checkout',
+          description: `Order placed successfully`,
+        })
       })
-
-      if (!response.ok) {
-        dispatch(logout())
-        localStorage.removeItem('authToken')
-        return
-      }
-
-      // set local
-    } catch (error) {
-      console.error('Error fetching data:', error)
-    }
+      .catch((error) => {
+        toast({
+          title: 'Checkout',
+          description: `${error}`,
+        })
+      })
   }
 
-  async function removeFromBasket(product: Product) {
-    const token = localStorage.getItem('authToken')
-
-    if (!token) {
-      return
-    }
-    try {
-      const response = await fetch(
-        'http://127.0.0.1:8000/api/basket/remove/' + product.id,
-        {
-          method: 'POST',
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            quantity: 1,
-          }),
-        },
-      )
-
-      if (!response.ok) {
-        if (response.status === 400) {
-          throw new Error('Bad Request (400)')
-        } else {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-      }
-
-      const data = await response.json()
-
-      dispatch(removeFromCart(product))
-      return data
-    } catch (error) {
-      console.error('Error fetching data:', error)
-    }
+  const handleChangeNote = (event) => {
+    setNote(event.target.value)
   }
 
   return (
     <div className="flex items-center justify-between h-16 border-b px-4 lg:px-8">
       <div className="flex items-center">
         <h2>
-          <Link to="/">logo</Link>
+          <Link to="/">HOME</Link>
         </h2>
       </div>
       <div className="flex items-center">
         {loggedIn == true ? (
-          <button onClick={() => doLogout()}>Logout</button>
+          <Link to="/orders">
+            <button className="mx-3">Orders</button>
+          </Link>
+        ) : (
+          ''
+        )}
+        {loggedIn == true ? (
+          <button className="mx-3" onClick={() => _logout()}>
+            Logout
+          </button>
         ) : (
           ''
         )}
@@ -116,13 +98,13 @@ export const Header = () => {
                       <div className="flex items-center gap-4">
                         <div className="w-20 h-20 shrink-0">
                           <img
-                            src={product.image}
-                            alt={product.title}
+                            src={product.imageUrl}
+                            alt={product.name}
                             className="w-full h-full object-cover"
                           />
                         </div>
                         <div>
-                          <h2 className="font-medium">{product.title}</h2>
+                          <h2 className="font-medium">{product.name}</h2>
                           <p>
                             ${product.price} x {product.quantity}
                           </p>
@@ -130,14 +112,25 @@ export const Header = () => {
                       </div>
                       <Button
                         variant="destructive"
-                        onClick={() => removeFromBasket(product)}
+                        onClick={() => _removeProduct(product)}
                       >
                         X
                       </Button>
                     </div>
                   ))}
                 </div>
-                <Button className="w-full">Checkout</Button>
+
+                <Input
+                  className="mb-2"
+                  type="text"
+                  placeholder="Write note"
+                  value={note}
+                  onChange={handleChangeNote}
+                ></Input>
+
+                <Button className="w-full" onClick={() => _checkout()}>
+                  Checkout ${localStorage.getItem('total_price')}
+                </Button>
               </>
             )}
             {cart.length === 0 && <p>Your cart is empty</p>}
