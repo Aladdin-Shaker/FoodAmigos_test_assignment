@@ -9,7 +9,7 @@ class ProductController extends Controller
 {
     public function getProducts()
     {
-        $products = Product::paginate(10);
+        $products = Product::all();
 
         return response()->json($products);
     }

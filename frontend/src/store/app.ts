@@ -1,4 +1,5 @@
-import { createSlice } from '@reduxjs/toolkit'
+
+import { createSlice } from '@reduxjs/toolkit';
 
 type Product = {
   id: number
@@ -42,6 +43,9 @@ export const appSlice = createSlice({
     login: (state) => {
       state.loggedIn = true
     },
+    signup: (state) => {
+      state.loggedIn = true
+    },
     logout: (state) => {
       state.loggedIn = false
     },
@@ -49,6 +53,6 @@ export const appSlice = createSlice({
 })
 
 // Action creators are generated for each case reducer function
-export const { addToCart, removeFromCart, login, logout } = appSlice.actions
+export const { addToCart, removeFromCart, login, signup, logout } = appSlice.actions
 
 export default appSlice.reducer

@@ -14,7 +14,7 @@ class AuthController extends Controller
     {
 
         $request->validate([
-            'email' => 'required|string|max:255',
+            'email' => 'required|string|max:255|unique:users,email',
             'password' => 'required|string|min:8',
             'phone_number' => 'required|string|max:255',
             'shipping_address' => 'required|string|max:255',
@@ -48,7 +48,7 @@ class AuthController extends Controller
             ]);
         }
 
-        return $user->createToken($request->email)->plainTextToken;
+        return response()->json(['token' => $user->createToken($request->email)->plainTextToken], 201);
     }
 
     public function logout(Request $request)
